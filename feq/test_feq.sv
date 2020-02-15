@@ -83,7 +83,7 @@ module test_feq();
                         
                         #1;
 
-                        if (y !== fy) begin
+                        if (y != fy) begin
                            $display("x1 = %b %b %b, %3d, %e",
 				    x1[31], x1[30:23], x1[22:0], x1[30:23], $bitstoshortreal(x1));
                            $display("x2 = %b %b %b, %3d, %e",

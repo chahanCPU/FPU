@@ -284,27 +284,47 @@ module finv(
 	wire [25:0] init;
 	assign init = INV(ma[22:15]);
 
-	wire [75:0] c1;
-        assign c1 = {50'b0, init} * ((1 << 50) - {52'b0, ma} * {50'b0, init});
-
-        wire [25:0] x1;
-        assign x1 = (c1[48] && (|c1[47:0] || c1[49]))? {c1[74:49]} + 26'b1
-                                                : {c1[74:49]};
+	wire [74:0] k1;
+ 	assign k1 = {51'b0, ma} * {49'b0, init} * {49'b0, init};
 
         logic [23:0] ma1;
-        logic [25:0] x11;
+        logic [25:0] init1;
+        logic [74:0] k11;
         logic s1;
         logic [7:0] e1;
 
         always @(posedge clk) begin
                 ma1 <= ma;
-                x11 <= x1;
+                init1 <= init;
+                k11 <= k1;
                 s1 <= s;
                 e1 <= e;
         end
 
+ 	wire [75:0] c1;
+ 	assign c1 = {init1, 50'b0} - {1'b0, k11};
+
+ 	wire [25:0] x1;
+ 	assign x1 = (c1[48] && (|c1[47:0] || c1[49]))? {c1[74:49]} + 26'b1
+ 						: {c1[74:49]};
+
+        logic [23:0] ma2;
+        logic [25:0] x11;
+        logic s2;
+        logic [7:0] e2;
+
+        always @(posedge clk) begin
+                ma2 <= ma1;
+                x11 <= x1;
+                s2 <= s1;
+                e2 <= e1;
+        end
+
+ 	wire [74:0] k2;
+ 	assign k2 = {51'b0, ma2} * {49'b0, x11} * {49'b0, x11};
+
  	wire [75:0] c2;
- 	assign c2 = {50'b0, x11} * ((1 << 50) - {52'b0, ma1} * {50'b0, x11});
+ 	assign c2 = {x11, 50'b0} - {1'b0, k2};
 
  	wire [25:0] x2;
  	assign x2 = (c2[48] && (|c2[47:0] || c2[49]))? {c2[74:49]} + 26'b1
@@ -313,14 +333,14 @@ module finv(
  	wire [7:0] ey;
  	wire [22:0] my;
 
- 	assign my = (e1 == 8'd254)? ((x2[3])? {1'b0, x2[25:4]} + 23'b1
+ 	assign my = (e2 == 8'd254)? ((x2[3])? {1'b0, x2[25:4]} + 23'b1
  					: {1'b0, x2[25:4]}) 
-                                        :(e1 == 8'd253)? ((x2[2])? x2[25:3] + 23'b1 : x2[25:3]) 
+                                        :(e2 == 8'd253)? ((x2[2])? x2[25:3] + 23'b1 : x2[25:3]) 
                                         :(x2[1])? x2[24:2] + 23'b1 : x2[24:2];
 
- 	assign ey = (e1 == 8'd254)? ~e1 - 1: ~e1 - 2;
+ 	assign ey = (e2 == 8'd254)? ~e2 - 1: ~e2 - 2;
 
- 	assign y = (my == 23'b0) ? {s1,ey + 8'b1, my} : {s1,ey,my};
+ 	assign y = (my == 23'b0) ? {s2,ey + 8'b1, my} : {s2,ey,my};
 
  endmodule
 
